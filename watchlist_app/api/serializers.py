@@ -2,11 +2,16 @@ from rest_framework import serializers
 from watchlist_app.models import Movie
 
 class MovieSerializer(serializers.ModelSerializer):
+
+    len_name = serializers.SerializerMethodField() #Creates a custom field for the serializer which is not in views/model
     class Meta:
         model = Movie
         fields = "__all__"
         # fields = ['id', 'name', 'description'] Will display only the fields mentioned inside list
         # exclude = ['description'] Will not display fields displayed inside the list
+
+    def get_len_name(self, object):
+        return len(object.name)
 
     def validate(self, data):
         if data['name'] == data['description']:
