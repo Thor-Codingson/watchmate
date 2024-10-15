@@ -1,8 +1,13 @@
+from django.forms import ValidationError
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, mixins
 from rest_framework.decorators import api_view
+from rest_framework import status
+
+from watchlist_app.api.permissions import AdminOrReadOnly, ReviewUserOrReadOnly
 from watchlist_app.models import WatchList, StreamPlatform, Reviews
 from watchlist_app.api.serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
 
@@ -10,26 +15,41 @@ from watchlist_app.api.serializers import WatchListSerializer, StreamPlatformSer
 class ReviewCreate(generics.CreateAPIView):
     serializer_class = ReviewSerializer
 
+    def get_queryset(self):
+        return Reviews.objects.all()
+
     def perform_create(self, serializer):
         pk = self.kwargs.get('pk')
         watchlist = WatchList.objects.get(pk=pk)
-        serializer.save(watchlist=watchlist)
+
+        review_user = self.request.user
+        review_queryset = Reviews.objects.filter(watchlist=watchlist, review_user=review_user)
+
+        if review_queryset.exists():
+            raise ValidationError("You have already reviewed this Movie")
+
+        serializer.save(watchlist=watchlist, review_user=review_user)
 
 
 class ReviewList(generics.ListAPIView):
-
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = ReviewSerializer
 
     def get_queryset(self):
         pk = self.kwargs['pk']
         return Reviews.objects.filter(watchlist=pk)
 
-class ReviewDetail(mixins.RetrieveModelMixin, generics.GenericAPIView):
+
+class ReviewDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
+    permission_classes = [ReviewUserOrReadOnly]
     queryset = Reviews.objects.all()
     serializer_class = ReviewSerializer
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
 class WatchListAV(APIView):
 
