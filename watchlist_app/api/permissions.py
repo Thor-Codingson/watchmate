@@ -3,8 +3,12 @@ from rest_framework import permissions
 class AdminOrReadOnly(permissions.IsAdminUser):
 
     def has_permission(self, request, view):
-        admin_permission = bool(request.user and request.user.is_staff)
-        return request.method == 'GET' or admin_permission
+        if request.method in permissions.SAFE_METHODS:
+            # Check permissions for read-only request
+            return True
+        else:
+            # Check permissions for write request
+            return bool(request.user and request.user.is_staff)
 
 class ReviewUserOrReadOnly(permissions.BasePermission):
 
