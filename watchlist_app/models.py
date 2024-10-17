@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 
+
 class StreamPlatform(models.Model):
     name = models.CharField(max_length=30)
     about = models.CharField(max_length=255)
@@ -11,6 +12,7 @@ class StreamPlatform(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class WatchList(models.Model):
     title = models.CharField(max_length=50)
@@ -23,6 +25,7 @@ class WatchList(models.Model):
 
     def __str__(self):
         return self.title
+
 
 class Reviews(models.Model):
     review_user = models.ForeignKey(User, on_delete=models.CASCADE)
