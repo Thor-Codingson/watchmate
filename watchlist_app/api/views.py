@@ -1,4 +1,4 @@
-from django.forms import ValidationError
+from django.forms import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework import status
 from rest_framework.views import APIView
@@ -26,10 +26,19 @@ class ReviewCreate(generics.CreateAPIView):
         review_queryset = Reviews.objects.filter(watchlist=watchlist, review_user=review_user)
 
         if review_queryset.exists():
-            raise ValidationError("You have already reviewed this Movie")
+            raise DRFValidationError({"detail": "You have already reviewed this Movie"})
+
+        rating = serializer.validated_data['rating']
+
+        # Update number_rating first
+        watchlist.number_rating += 1
+
+        # Recalculate the average rating
+        watchlist.avg_rating = ((watchlist.avg_rating * (watchlist.number_rating - 1)) + rating) / watchlist.number_rating
+
+        watchlist.save()
 
         serializer.save(watchlist=watchlist, review_user=review_user)
-
 
 class ReviewList(generics.ListAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
