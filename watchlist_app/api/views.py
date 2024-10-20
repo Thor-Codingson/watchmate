@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import generics, mixins
 from rest_framework.decorators import api_view
 from rest_framework import status
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle, ScopedRateThrottle
 
 from watchlist_app.api.permissions import AdminOrReadOnly, ReviewUserOrReadOnly
 from watchlist_app.models import WatchList, StreamPlatform, Reviews
@@ -43,6 +44,9 @@ class ReviewCreate(generics.CreateAPIView):
 class ReviewList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
+    #Custom throttle scope
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'review-list'
 
     def get_queryset(self):
         pk = self.kwargs['pk']
@@ -51,10 +55,13 @@ class ReviewList(generics.ListAPIView):
 
 class ReviewDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
     permission_classes = [ReviewUserOrReadOnly]
-    queryset = Reviews.objects.all()
     serializer_class = ReviewSerializer
+    throttle_classes = [UserRateThrottle, AnonRateThrottle]
+
+    queryset = Reviews.objects.all()
 
     def get(self, request, *args, **kwargs):
+        print(f"User: {request.user}")
         return self.retrieve(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):

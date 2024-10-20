@@ -9,8 +9,9 @@ from user_app.api.serializers import RegistrationSerializer
 from user_app import models
 
 
-class logout_view(APIView):
+from rest_framework.authtoken.models import Token
 
+class logout_view(APIView):
     def post(self, request):
         request.user.auth_token.delete()
         return Response(status=status.HTTP_200_OK)
@@ -31,14 +32,14 @@ def registration_view(request):
             data['username'] = account.username
             data['email'] = account.email
 
-            # token = Token.objects.get(user=account).key
-            # data['token'] = token
+            token = Token.objects.get(user=account)
+            data['token'] = token.key
 
-            refresh = RefreshToken.for_user(account)
-            data['token'] = {
-                            'refresh': str(refresh),
-                            'access': str(refresh.access_token),
-                        }
+            # refresh = RefreshToken.for_user(account)
+            # data['token'] = {
+            #                 'refresh': str(refresh),
+            #                 'access': str(refresh.access_token),
+            #             }
         else:
             data = serializer.errors
 
