@@ -13,6 +13,22 @@ from watchlist_app.models import WatchList, StreamPlatform, Reviews
 from watchlist_app.api.serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
 
 
+class UserReview(generics.ListAPIView):
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        username = self.kwargs['username']
+        # Filtering using paramaters:
+        # username = self.request.query_params.get('username')
+        return Reviews.objects.filter(review_user__username=username)
+        '''
+        Why We Need to Append __<field> After Foreign Keys:
+            1. Accessing Related Model Fields: The double underscore __ allows you to access fields of the related model (in this case, User).
+            2. Following Relationships: When working with foreign key relationships, __ enables Django to follow that relationship and access the fields of the related model.
+            3. Chaining Field Lookups: You can chain lookups through multiple relationships. For example, if User had a related profile with its own fields, you could chain lookups like review_user__profile__bio.
+        '''
+
+
 class ReviewCreate(generics.CreateAPIView):
     serializer_class = ReviewSerializer
 
