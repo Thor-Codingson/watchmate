@@ -2,10 +2,19 @@ from rest_framework import serializers
 from watchlist_app.models import WatchList, StreamPlatform, Reviews
 
 class ReviewSerializer(serializers.ModelSerializer):
+    watchlist_name = serializers.SlugRelatedField(slug_field='title', read_only=True, source='watchlist')
+    watchlist_url = serializers.HyperlinkedRelatedField(
+        view_name='movie-detail',  # The name of the watchlist detail view
+        lookup_field='pk',             # How the URL will look up the watchlist
+        read_only=True,
+        source='watchlist'             # This links the URL to the watchlist ForeignKey in the Review model
+    )
     review_user = serializers.StringRelatedField(read_only=True)
     class Meta:
         model = Reviews
-        exclude = ('watchlist',)
+        fields = "__all__"
+        # exclude = ('watchlist',)
+        # include = ('watchlist_name',)
         # fields = '__all__'
 
 class WatchListSerializer(serializers.ModelSerializer):
@@ -15,6 +24,7 @@ class WatchListSerializer(serializers.ModelSerializer):
     class Meta:
         model = WatchList
         fields = "__all__"
+        # include = ('watchlist_name',)
         # fields = ['id', 'name', 'description'] Will display only the fields mentioned inside list
         # exclude = ['description'] Will not display fields displayed inside the list
 
