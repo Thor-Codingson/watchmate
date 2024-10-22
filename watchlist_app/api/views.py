@@ -1,12 +1,14 @@
 from django.forms import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
-from rest_framework import status
+from rest_framework import status, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, mixins
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle, ScopedRateThrottle
+
+from django_filters.rest_framework import DjangoFilterBackend
 
 from watchlist_app.api.permissions import AdminOrReadOnly, ReviewUserOrReadOnly
 from watchlist_app.models import WatchList, StreamPlatform, Reviews
@@ -58,15 +60,31 @@ class ReviewCreate(generics.CreateAPIView):
         serializer.save(watchlist=watchlist, review_user=review_user)
 
 class ReviewList(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
     #Custom throttle scope
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'review-list'
+    filter_backends = [DjangoFilterBackend]
 
     def get_queryset(self):
         pk = self.kwargs['pk']
         return Reviews.objects.filter(watchlist=pk)
+
+
+class WatchListFilter(generics.ListAPIView):
+    queryset = WatchList.objects.all()
+    serializer_class = WatchListSerializer
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['title', 'platform__name']
+
+class WatchListSearch(generics.ListAPIView):
+    queryset = WatchList.objects.all()
+    serializer_class = WatchListSerializer
+
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'avg_rating' , 'platform__name']
 
 
 class ReviewDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
